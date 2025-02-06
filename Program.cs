@@ -15,8 +15,10 @@ var builder = Host.CreateApplicationBuilder(args);
 // Add user secrets
 builder.Configuration.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
 
+builder.Configuration.AddJsonFile("secrets.json");
+
 // Parse settings
-builder.Services.AddSettings<TelegramSettings>(builder.Configuration.GetSection("Telegram"));
+builder.Services.Configure<TelegramSettings>(builder.Configuration);
 
 // Add Telegram update middleware pipeline
 builder.AddMiddlewarePipeline();
@@ -44,5 +46,5 @@ app.UseErrorHandler(); // Send error messages to users
 app.UseUpdateLogger(); // Log received Telegram bot updates
 if (builder.Environment.IsDevelopment()) app.UseRequestTimer(); // Measure update processing time
 app.UseTextCommands(); // Handle text commands
-app.UseCallbackQuery();/ Start the application
+app.UseCallbackQuery();// Start the application
 app.Run();
