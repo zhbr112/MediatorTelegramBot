@@ -44,24 +44,5 @@ app.UseErrorHandler(); // Send error messages to users
 app.UseUpdateLogger(); // Log received Telegram bot updates
 if (builder.Environment.IsDevelopment()) app.UseRequestTimer(); // Measure update processing time
 app.UseTextCommands(); // Handle text commands
-app.UseCallbackQuery();
-
-// Anonymous middleware example
-app.Use(async (context, next) =>
-{
-    // Only proceed with sticker messages
-    if (context.Update.Message?.Sticker is not { } sticker)
-    {
-        await next(context);
-        return;
-    }
-
-    // Echo the sticker
-    await context.Client.SendSticker(context.Update.Message.Chat.Id, InputFile.FromFileId(sticker.FileId));
-
-    // Continue the execution
-    await next(context);
-});
-
-// Start the application
+app.UseCallbackQuery();/ Start the application
 app.Run();
