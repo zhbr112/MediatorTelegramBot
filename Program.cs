@@ -2,13 +2,16 @@
 using MediatorTelegramBot.Callback;
 using MediatorTelegramBot.Commands;
 using MediatorTelegramBot.Configuration;
+using MediatorTelegramBot.Models;
 using MediatorTelegramBot.Services;
 using MediatorTelegramBot.Utility;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using MediatorTelegramBot.Data;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -16,6 +19,8 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
 
 builder.Configuration.AddJsonFile("secrets.json");
+
+builder.Services.AddDbContext<MediatorDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
 // Parse settings
 builder.Services.Configure<TelegramSettings>(builder.Configuration);
