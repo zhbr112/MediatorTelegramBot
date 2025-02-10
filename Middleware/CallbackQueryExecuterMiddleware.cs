@@ -32,7 +32,6 @@ public class CallbackQueryExecuterMiddleware : IBotMiddleware
 
         logger.LogDebug("Found {count} CallbackQuery", commands.Count);
 
-
         // Find commands that match
         var CallbackQuerys = commands.Where(command => command.CanExecute(context.Update.CallbackQuery)).ToList();
 

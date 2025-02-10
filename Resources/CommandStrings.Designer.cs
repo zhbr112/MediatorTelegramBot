@@ -61,7 +61,7 @@ namespace MediatorTelegramBot.Resources {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Hello! This is Telegram bot template!.
+        ///   Ищет локализованную строку, похожую на Территория переговоров.
         /// </summary>
         internal static string Start_Welcome {
             get {

@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MediatorTelegramBot.Models;
+﻿namespace MediatorTelegramBot.Models;
 
 public class Mediator
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; }
 
     public string Name { get; set; }
 
@@ -17,4 +11,21 @@ public class Mediator
     public string Phone { get; set; }
 
     public string[] Tags { get; set; }
+
+    public Mediator()
+    {
+        Id = Guid.NewGuid();
+        Name = string.Empty;
+        Description = string.Empty;
+        Phone = string.Empty;
+        Tags = [];
+    }
+    public Mediator(Guid id, string name, string description, string phone, string[] tags)
+    {
+        Id = id;
+        Name = name;
+        Description = description;
+        Phone = phone;
+        Tags = tags;
+    }
 }

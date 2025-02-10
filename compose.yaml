@@ -3,6 +3,10 @@ services:
     build:
       context: .
       target: final
+    depends_on:
+        - db
+    restart: always
+  
 
   db:
     image: postgres:17.2-alpine3.21

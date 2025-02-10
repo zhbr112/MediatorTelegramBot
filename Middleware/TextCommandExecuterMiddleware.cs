@@ -12,11 +12,11 @@ namespace MediatorTelegramBot.Middleware;
 public class TextCommandExecuterMiddleware : IBotMiddleware
 {
     /// <summary>
-    ///     Find and execute all text commands
+    ///     Find and execute all xt commands
     /// </summary>
     public async Task InvokeAsync(UpdateContext context, BotMiddlewareDelegate next)
     {
-        if (context.Update.Message?.Text is null)
+        if (context.Update.Message?.Text is null && context.Update.Message?.Photo is null)
         {
             await next(context);
             return;
