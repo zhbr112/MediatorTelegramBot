@@ -1,21 +1,24 @@
-﻿using System;
+﻿using Amazon.S3.Model;
+using MediatorTelegramBot.Commands;
+using MediatorTelegramBot.Data;
+using MediatorTelegramBot.Extensions;
+using MediatorTelegramBot.Models;
+using MediatorTelegramBot.Resources;
+using MediatorTelegramBot.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Telegram.Bot.Types;
 using Telegram.Bot;
-using MediatorTelegramBot.Resources;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
-using MediatorTelegramBot.Data;
-using MediatorTelegramBot.Commands;
-using Microsoft.Extensions.Logging;
-using MediatorTelegramBot.Models;
-using Amazon.S3.Model;
 
 namespace MediatorTelegramBot.Callback;
 
-public class GetMediatorsCallback(MediatorDbContext db, S3Client s3Client) : ICallbackQuery
+public class GetMediatorsCallback(MediatorDbContext db, MediatorCardService cardService) : ICallbackQuery
 {
     public bool CanExecute(CallbackQuery callbackQuery)
     {
@@ -25,41 +28,30 @@ public class GetMediatorsCallback(MediatorDbContext db, S3Client s3Client) : ICa
     public async Task ExecuteAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery, CancellationToken cancellationToken)
     {
         var tag = callbackQuery.Data![(callbackQuery.Data!.IndexOf(' ') + 1)..];
+        var userId = callbackQuery.From.Id;
 
+        // Получаем медиаторов, включая их отзывы для расчета рейтинга
+        var mediators = await db.Mediators
+            .Include(m => m.Reviews)
+            .Where(x => x.Tags.Contains(tag))
+            .ToListAsync(cancellationToken);
 
-        var mediators = db.Mediators.Where(x => x.Tags.Contains(tag)).ToArray();
+        // Получаем пользователя и его избранных, чтобы знать, какую кнопку "Избранное" показывать
+        var user = await db.Users
+            .Include(u => u.FavoriteMediators)
+            .FirstOrDefaultAsync(u => u.TelegramId == userId, cancellationToken);
 
-        await botClient.AnswerCallbackQuery(callbackQuery.Id);
+        await botClient.AnswerCallbackQuery(callbackQuery.Id, cancellationToken: cancellationToken);
+
+        if (!mediators.Any())
+        {
+            await botClient.SendMessage(callbackQuery.Message.Chat.Id, "В этой категории пока нет медиаторов.", cancellationToken: cancellationToken);
+            return;
+        }
 
         foreach (var mediator in mediators)
         {
-            var message = $"{mediator.Name}\n{mediator.Description}\n{string.Join("\n", mediator.Tags.Select(x => $"- {x}"))}\nтел.{mediator.Phone}";
-
-            var listResponse = await s3Client.S3.ListObjectsV2Async(new ListObjectsV2Request
-            {
-                BucketName = "mediators",
-                Prefix = $"{mediator.Id}.jpg"
-            });
-
-            if (listResponse.S3Objects is null)
-            {
-                await botClient.SendMessage(callbackQuery.Message.Chat.Id, message,
-                cancellationToken: cancellationToken);
-                continue;
-            }
-
-            var presignRequest = new GetPreSignedUrlRequest()
-            {
-                BucketName = "mediators",
-                Key = $"{mediator.Id}.jpg",
-                Expires = DateTime.UtcNow.AddSeconds(10),
-            };
-
-            var presignedUrlResponse = s3Client.S3.GetPreSignedURL(presignRequest);
-          
-            await botClient.SendPhoto(callbackQuery.Message.Chat.Id, presignedUrlResponse, caption: message,
-                cancellationToken: cancellationToken);
+            await cardService.SendMediatorCardAsync(botClient, callbackQuery.Message.Chat.Id, mediator.Id, userId, cancellationToken);
         }
-        
     }
 }

@@ -7,6 +7,9 @@
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <UserSecretsId>d9cec99a-97de-44ca-b3b8-f113aa8558a0</UserSecretsId>
   </PropertyGroup>
+    <ItemGroup>
+      <None Remove="secrets.json" />
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="AWSSDK.S3" Version="4.0.0-preview.6" />
@@ -24,6 +27,12 @@
 
     <ItemGroup>
         <None Include="appsettings.json" CopyToPublishDirectory="Always" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="secrets.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>

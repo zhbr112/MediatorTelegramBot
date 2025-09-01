@@ -5,16 +5,15 @@ services:
       target: final
     depends_on:
         - db
-    restart: always
+    restart: unless-stopped
   
-
   db:
     image: postgres:17.2-alpine3.21
-    restart: always
+    restart: unless-stopped
     environment:
         POSTGRES_USER: test
         POSTGRES_PASSWORD: test
-        POSTGRES_DB: test
+        POSTGRES_DB: mediator
     expose:
       - 5432
 

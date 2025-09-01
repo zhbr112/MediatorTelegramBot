@@ -12,6 +12,9 @@ public class Mediator
 
     public string[] Tags { get; set; }
 
+    // Навигационные свойства
+    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+
     public Mediator()
     {
         Id = Guid.NewGuid();

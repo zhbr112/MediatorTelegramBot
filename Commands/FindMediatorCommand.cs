@@ -13,7 +13,7 @@ public class FindMediatorCommand(MediatorDbContext db, ILogger<StartCommand> log
 {
     public bool CanExecute(CommandContext context)
     {
-        return context.Argument?.Equals("Найти медиатора", StringComparison.OrdinalIgnoreCase) ?? false;
+        return context.Argument?.Equals("Наши медиаторы", StringComparison.OrdinalIgnoreCase) ?? false;
     }
 
     public async Task ExecuteAsync(ITelegramBotClient botClient, CommandContext context,
