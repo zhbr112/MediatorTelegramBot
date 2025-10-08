@@ -56,6 +56,9 @@
             nugetDeps = ./deps.json;
             dotnet-sdk = pkgs.dotnet-sdk_9;
             dotnet-runtime = pkgs.dotnet-runtime_9;
+            preConfigure = ''
+              echo "{}" > secrets.json
+            '';
 
             # `buildDotnetModule` автоматически выполняет restore, build и publish.
             # Результатом будет готовое к запуску приложение.
