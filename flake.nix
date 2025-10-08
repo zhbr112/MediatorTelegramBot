@@ -57,7 +57,7 @@
             dotnet-sdk = pkgs.dotnet-sdk_9;
             dotnet-runtime = pkgs.dotnet-runtime_9;
             preConfigure = ''
-              cp /var/lib/mediator-bot/secrets.json secrets.json
+              echo "{}" > secrets.json
             '';
 
             # `buildDotnetModule` автоматически выполняет restore, build и publish.
@@ -136,12 +136,12 @@
                   WorkingDirectory = "/var/lib/mediator-bot";
 
                   # 3. УПРОЩЕНО: Скрипт подготовки теперь проще, так как root все может.
-                #   ExecStartPre = pkgs.writeShellScript "prepare-bot-secrets" ''
-                #     set -e
-                #     cp /var/lib/mediator-bot/secrets.json ${cfg.package}/lib/MediatorTelegramBot/secrets.json 
-                #   '';
+                  ExecStartPre = pkgs.writeShellScript "prepare-bot-secrets" ''
+                    set -e
+                    cp -r ${cfg.package}/lib/MediatorTelegramBot /var/lib/mediator-bot/
+                  '';
                   
-                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ${cfg.package}/lib/MediatorTelegramBot/MediatorTelegramBot.dll";
+                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet /var/lib/mediator-bot/MediatorTelegramBot.dll";
 
                  
                   
