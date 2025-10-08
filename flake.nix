@@ -123,7 +123,7 @@
               systemd.services.mediator-telegram-bot = {
                 description = "Mediator Telegram Bot Service";
                 wantedBy = [ "multi-user.target" ];
-                after = [ "postgresql.service" ];
+                after = [ "postgresql.service" "systemd-tmpfiles-setup.service"];
                 requires = [ "postgresql.service" ];
 
                 serviceConfig = {
@@ -136,22 +136,14 @@
                   WorkingDirectory = "/var/lib/mediator-bot";
 
                   # 3. УПРОЩЕНО: Скрипт подготовки теперь проще, так как root все может.
-                  ExecStartPre = pkgs.writeShellScript "prepare-bot-env" ''
+                  ExecStartPre = pkgs.writeShellScript "prepare-bot-secrets" ''
                     set -e
-                    APP_DIR="/var/lib/mediator-bot/app"
-                    # root без проблем удалит и создаст директорию
-                    rm -rf "$APP_DIR"
-                    mkdir -p "$APP_DIR"
-                    # Копируем файлы
-                    cp -r ${cfg.package}/* "$APP_DIR/"
-                    cp ${cfg.secretsFile} "$APP_DIR/secrets.json"
-                    # chown больше не нужен
+                    cp ${cfg.secretsFile} /var/lib/mediator-bot/secrets.json
                   '';
                   
-                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet app/MediatorTelegramBot.dll";
+                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ${cfg.package}/MediatorTelegramBot.dll";
 
-                  # 4. Скрипт очистки (запускается как root ПОСЛЕ остановки сервиса)
-                  ExecStopPost = "${pkgs.coreutils}/bin/rm -rf /var/lib/mediator-bot/app";
+                 
                   
                   Restart = "on-failure";
                 };
