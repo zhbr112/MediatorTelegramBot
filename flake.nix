@@ -124,7 +124,7 @@
             #     isSystemUser = true;
             #     group = "mediator-bot";
             #   };
-              users.groups.mediator-bot = {root};
+              users.groups.mediator-bot = {};
 
               systemd.tmpfiles.rules = [
                 "d /var/lib/mediator-bot 0755 root root -"
@@ -139,7 +139,7 @@
                 serviceConfig = {
                   Type = "simple";
                   User = "root";
-                  Group = "mediator-bot";
+                  Group = "root";
                   
                   WorkingDirectory = "/var/lib/mediator-bot/app";
 
