@@ -138,7 +138,7 @@
                   # 3. УПРОЩЕНО: Скрипт подготовки теперь проще, так как root все может.
                   ExecStartPre = pkgs.writeShellScript "prepare-bot-secrets" ''
                     set -e
-                    cp ${cfg.secretsFile} /var/lib/mediator-bot/secrets.json
+                    cp ${cfg.package}/lib/MediatorTelegramBot/secrets.json /var/lib/mediator-bot/secrets.json
                   '';
                   
                   ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ${cfg.package}/lib/MediatorTelegramBot/MediatorTelegramBot.dll";
