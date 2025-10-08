@@ -141,27 +141,33 @@
                   User = "mediator-bot";
                   Group = "mediator-bot";
                   
-                  # 2. Рабочая директория - "дом", который теперь гарантированно существует.
-                  WorkingDirectory = "/var/lib/mediator-bot";
+                  # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: Разделение данных и безопасная подготовка ---
 
-                  # 3. Скрипт выполняется от имени root, но работает внутри "дома".
+                  # 1. Рабочей директорией будет подпапка 'app'
+                  WorkingDirectory = "/var/lib/mediator-bot/app";
+
                   ExecStartPre = pkgs.writeShellScript "prepare-bot-env" ''
                     set -e # Прерывать выполнение при любой ошибке
 
-                    APP_DIR="app" # Используем относительный путь
+                    # Определяем пути
+                    BASE_DIR="/var/lib/mediator-bot"
+                    APP_DIR="$BASE_DIR/app"
 
-                    # Безопасно очищаем и пересоздаем ТОЛЬКО папку приложения
+                    # 2. Создаем базовую директорию, если ее нет. Секреты здесь не трогаем.
+                    mkdir -p "$BASE_DIR"
+
+                    # 3. Безопасно очищаем и пересоздаем ТОЛЬКО папку приложения
                     rm -rf "$APP_DIR"
                     mkdir -p "$APP_DIR"
 
-                    # Копируем файлы приложения в его папку
+                    # 4. Копируем файлы приложения в его папку
                     cp -r ${cfg.package}/* "$APP_DIR/"
 
-                    # Копируем секреты в папку приложения
+                    # 5. Копируем секреты в папку приложения, где он будет их искать
                     cp ${cfg.secretsFile} "$APP_DIR/secrets.json"
 
-                    # chown больше не нужен, так как вся /var/lib/mediator-bot уже
-                    # принадлежит нашему пользователю благодаря tmpfiles.
+                    # 6. Делаем пользователя владельцем всего, с чем ему нужно работать
+                    chown -R mediator-bot:mediator-bot "$APP_DIR"
                   '';
                   
                   ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet app/MediatorTelegramBot.dll";
