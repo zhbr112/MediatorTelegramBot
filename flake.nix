@@ -137,30 +137,33 @@
                   User = "mediator-bot";
                   Group = "mediator-bot";
                   
-                  WorkingDirectory = "/var/lib/mediator-bot";
+                  # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: Разделение данных и безопасная подготовка ---
+
+                  # 1. Рабочей директорией будет подпапка 'app'
+                  WorkingDirectory = "/var/lib/mediator-bot/app";
 
                   ExecStartPre = pkgs.writeShellScript "prepare-bot-env" ''
                     set -e # Прерывать выполнение при любой ошибке
 
-                    # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: Полная очистка перед подготовкой ---
-                    # Определяем рабочую директорию
-                    TARGET_DIR="/var/lib/mediator-bot"
+                    # Определяем пути
+                    BASE_DIR="/var/lib/mediator-bot"
+                    APP_DIR="$BASE_DIR/app"
 
-                    # 1. Полностью удаляем старую директорию, чтобы избежать проблем с правами
-                    rm -rf "$TARGET_DIR"
+                    # 2. Создаем базовую директорию, если ее нет. Секреты здесь не трогаем.
+                    mkdir -p "$BASE_DIR"
 
-                    # 2. Создаем ее заново (теперь она будет принадлежать root)
-                    mkdir -p "$TARGET_DIR"
+                    # 3. Безопасно очищаем и пересоздаем ТОЛЬКО папку приложения
+                    rm -rf "$APP_DIR"
+                    mkdir -p "$APP_DIR"
 
-                    # 3. Копируем приложение (root без проблем пишет в свою директорию)
-                    cp -r ${cfg.package}/* "$TARGET_DIR/"
+                    # 4. Копируем файлы приложения в его папку
+                    cp -r ${cfg.package}/* "$APP_DIR/"
 
-                    # 4. Копируем секреты
-                    cp ${cfg.secretsFile} "$TARGET_DIR/secrets.json"
+                    # 5. Копируем секреты в папку приложения, где он будет их искать
+                    cp ${cfg.secretsFile} "$APP_DIR/secrets.json"
 
-                    # 5. Передаем права на все готовое нашему пользователю
-                    chown -R mediator-bot:mediator-bot "$TARGET_DIR"
-                    # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+                    # 6. Делаем пользователя владельцем всего, с чем ему нужно работать
+                    chown -R mediator-bot:mediator-bot "$APP_DIR"
                   '';
                   
                   ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet MediatorTelegramBot.dll";
