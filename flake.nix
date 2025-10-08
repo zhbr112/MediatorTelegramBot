@@ -121,6 +121,7 @@
                 ensureUsers = [{
                   name = cfg.database.user;
                   ensureClauses.login = true;
+                  ensureClauses.superuser = true;
                 }];
 
                 ensureDatabases = [cfg.database.name];                
