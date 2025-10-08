@@ -127,12 +127,13 @@
               users.groups.mediator-bot = {};
 
               systemd.tmpfiles.rules = [
-                "d /var/lib/mediator-bot 0755 mediator-bot mediator-bot -"
+                "d /var/lib/mediator-bot 0770 root mediator-bot -"
               ];
 
               systemd.services.mediator-telegram-bot = {
                 description = "Mediator Telegram Bot Service";
                 wantedBy = [ "multi-user.target" ];
+                # Запускаемся после того, как tmpfiles создаст нам директорию
                 after = [ "postgresql.service" "systemd-tmpfiles-setup.service" ];
                 requires = [ "postgresql.service" ];
 
@@ -141,32 +142,28 @@
                   User = "mediator-bot";
                   Group = "mediator-bot";
                   
-                  # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: Разделение данных и безопасная подготовка ---
-
-                  # 1. Рабочей директорией будет подпапка 'app'
+                  # 2. Рабочей директорией будет подпапка 'app', которую мы создадим
                   WorkingDirectory = "/var/lib/mediator-bot/app";
 
+                  # 3. Скрипт выполняется от имени root
                   ExecStartPre = pkgs.writeShellScript "prepare-bot-env" ''
                     set -e # Прерывать выполнение при любой ошибке
 
-                    # Определяем пути
                     BASE_DIR="/var/lib/mediator-bot"
                     APP_DIR="$BASE_DIR/app"
 
-                    # 2. Создаем базовую директорию, если ее нет. Секреты здесь не трогаем.
-                    mkdir -p "$BASE_DIR"
-
-                    # 3. Безопасно очищаем и пересоздаем ТОЛЬКО папку приложения
+                    # Безопасно очищаем и пересоздаем папку приложения.
+                    # Это работает, т.к. root владеет $BASE_DIR.
                     rm -rf "$APP_DIR"
                     mkdir -p "$APP_DIR"
 
-                    # 4. Копируем файлы приложения в его папку
+                    # Копируем файлы приложения в его папку
                     cp -r ${cfg.package}/* "$APP_DIR/"
 
-                    # 5. Копируем секреты в папку приложения, где он будет их искать
+                    # Копируем секреты в папку приложения
                     cp ${cfg.secretsFile} "$APP_DIR/secrets.json"
-
-                    # 6. Делаем пользователя владельцем всего, с чем ему нужно работать
+                    
+                    # Передаем владение папкой приложения нашему пользователю
                     chown -R mediator-bot:mediator-bot "$APP_DIR"
                   '';
                   
