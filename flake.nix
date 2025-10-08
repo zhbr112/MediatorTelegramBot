@@ -127,13 +127,12 @@
               users.groups.mediator-bot = {};
 
               systemd.tmpfiles.rules = [
-                "d /var/lib/mediator-bot 0770 root mediator-bot -"
+                "d /var/lib/mediator-bot 0755 root root -"
               ];
 
               systemd.services.mediator-telegram-bot = {
                 description = "Mediator Telegram Bot Service";
                 wantedBy = [ "multi-user.target" ];
-                # Запускаемся после того, как tmpfiles создаст нам директорию
                 after = [ "postgresql.service" "systemd-tmpfiles-setup.service" ];
                 requires = [ "postgresql.service" ];
 
@@ -142,32 +141,25 @@
                   User = "mediator-bot";
                   Group = "mediator-bot";
                   
-                  # 2. Рабочей директорией будет подпапка 'app', которую мы создадим
                   WorkingDirectory = "/var/lib/mediator-bot/app";
 
-                  # 3. Скрипт выполняется от имени root
+                  # 2. Скрипт подготовки (запускается как root)
                   ExecStartPre = pkgs.writeShellScript "prepare-bot-env" ''
-                    set -e # Прерывать выполнение при любой ошибке
-
-                    BASE_DIR="/var/lib/mediator-bot"
-                    APP_DIR="$BASE_DIR/app"
-
-                    # Безопасно очищаем и пересоздаем папку приложения.
-                    # Это работает, т.к. root владеет $BASE_DIR.
-                    rm -rf "$APP_DIR"
+                    set -e
+                    APP_DIR="/var/lib/mediator-bot/app"
+                    # Создаем папку приложения (rm не нужен, т.к. ExecStopPost все почистит)
                     mkdir -p "$APP_DIR"
-
-                    # Копируем файлы приложения в его папку
+                    # Копируем файлы
                     cp -r ${cfg.package}/* "$APP_DIR/"
-
-                    # Копируем секреты в папку приложения
                     cp ${cfg.secretsFile} "$APP_DIR/secrets.json"
-                    
-                    # Передаем владение папкой приложения нашему пользователю
+                    # Отдаем владение пользователю сервиса
                     chown -R mediator-bot:mediator-bot "$APP_DIR"
-                  '';
+                  '';               
                   
                   ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet app/MediatorTelegramBot.dll";
+
+                  # 4. Скрипт очистки (запускается как root ПОСЛЕ остановки сервиса)
+                  ExecStopPost = "${pkgs.coreutils}/bin/rm -rf /var/lib/mediator-bot/app";
                   
                   Restart = "on-failure";
                 };
