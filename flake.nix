@@ -64,15 +64,13 @@
             # 1. Настраиваем PostgreSQL
             services.postgresql = {
               enable = true;
+              # 1. Декларативно создаем пользователя 'test'
               ensureUsers = [{
-                name = "test";
-                # Пароль будет взят из файла, определенного в системной конфигурации.
-                passwordFile = "/run/keys/postgres-test-password";
+                  name = "test";
+                  passwordFile = "/run/keys/postgres-test-password";
               }];
-              initialDatabases = [{
-                name = "mediator";
-                owner = "test";
-              }];
+              # 2. Декларативно создаем базу данных 'mediator'
+              ensureDatabases = [ "mediator" ];
             };
             
             # 2. Создаем системного пользователя для запуска сервиса
