@@ -120,42 +120,32 @@
               };
               # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
               
-            #   users.users.mediator-bot = {
-            #     isSystemUser = true;
-            #     group = "mediator-bot";
-            #   };
-              users.groups.mediator-bot = {};
-
-              systemd.tmpfiles.rules = [
-                "d /var/lib/mediator-bot 0755 root root -"
-              ];
-
               systemd.services.mediator-telegram-bot = {
                 description = "Mediator Telegram Bot Service";
                 wantedBy = [ "multi-user.target" ];
-                after = [ "postgresql.service" "systemd-tmpfiles-setup.service" ];
+                after = [ "postgresql.service" ];
                 requires = [ "postgresql.service" ];
 
                 serviceConfig = {
                   Type = "simple";
-                  User = "mediator-bot";
-                  Group = "mediator-bot";
+
+                  # 2. ИЗМЕНЕНО: Запускаем сервис от имени root.
+                  User = "root";
+                  Group = "root";
                   
-                  # 2. Рабочая директория - это постоянный "дом". Он ГАРАНТИРОВАННО существует.
-                  #    Это решает ошибку CHDIR раз и навсегда.
                   WorkingDirectory = "/var/lib/mediator-bot";
 
-                  # 3. Скрипт подготовки (запускается как root)
+                  # 3. УПРОЩЕНО: Скрипт подготовки теперь проще, так как root все может.
                   ExecStartPre = pkgs.writeShellScript "prepare-bot-env" ''
                     set -e
                     APP_DIR="/var/lib/mediator-bot/app"
-                    # Создаем временную рабочую область
+                    # root без проблем удалит и создаст директорию
+                    rm -rf "$APP_DIR"
                     mkdir -p "$APP_DIR"
                     # Копируем файлы
                     cp -r ${cfg.package}/* "$APP_DIR/"
                     cp ${cfg.secretsFile} "$APP_DIR/secrets.json"
-                    # Отдаем владение рабочей областью пользователю сервиса
-                    chown -R root:root "$APP_DIR"
+                    # chown больше не нужен
                   '';
                   
                   ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet app/MediatorTelegramBot.dll";
