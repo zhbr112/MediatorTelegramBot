@@ -139,9 +139,10 @@
                   ExecStartPre = pkgs.writeShellScript "prepare-bot-secrets" ''
                     set -e
                     cp -r ${cfg.package}/lib/MediatorTelegramBot/ /var/lib/mediator-bot/
+                    cp /var/lib/mediator-bot/secrets.json /var/lib/mediator-bot/MediatorTelegramBot/secrets.json
                   '';
                   
-                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet /var/lib/mediator-bot/MediatorTelegramBot.dll";
+                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet /var/lib/mediator-bot/MediatorTelegramBot/MediatorTelegramBot.dll";
 
                  
                   
