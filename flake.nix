@@ -118,6 +118,7 @@
                 }];
 
                 ensureDatabases = [cfg.database.name];
+                ensureClauses.login = true;
               };
               # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
               
