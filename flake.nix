@@ -137,30 +137,33 @@
                   User = "mediator-bot";
                   Group = "mediator-bot";
                   
-                  # 1. Указываем "дом" сервиса в качестве рабочей директории.
-                  # У пользователя mediator-bot будут права на эту папку.
                   WorkingDirectory = "/var/lib/mediator-bot";
 
-                  # 2. Этот скрипт выполняется от имени root перед запуском.
-                  # Он подготавливает "дом" для сервиса.
                   ExecStartPre = pkgs.writeShellScript "prepare-bot-env" ''
                     set -e # Прерывать выполнение при любой ошибке
 
-                    # Создаем директорию, если ее нет
-                    mkdir -p /var/lib/mediator-bot
+                    # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: Полная очистка перед подготовкой ---
+                    # Определяем рабочую директорию
+                    TARGET_DIR="/var/lib/mediator-bot"
 
-                    # Копируем скомпилированное приложение из Nix Store в "дом"
-                    cp -r ${cfg.package}/* /var/lib/mediator-bot/
+                    # 1. Полностью удаляем старую директорию, чтобы избежать проблем с правами
+                    rm -rf "$TARGET_DIR"
 
-                    # Копируем файл с секретами
-                    cp ${cfg.secretsFile} /var/lib/mediator-bot/secrets.json
+                    # 2. Создаем ее заново (теперь она будет принадлежать root)
+                    mkdir -p "$TARGET_DIR"
 
-                    # Делаем пользователя mediator-bot владельцем всего в его "доме"
-                    chown -R mediator-bot:mediator-bot /var/lib/mediator-bot
+                    # 3. Копируем приложение (root без проблем пишет в свою директорию)
+                    cp -r ${cfg.package}/* "$TARGET_DIR/"
+
+                    # 4. Копируем секреты
+                    cp ${cfg.secretsFile} "$TARGET_DIR/secrets.json"
+
+                    # 5. Передаем права на все готовое нашему пользователю
+                    chown -R mediator-bot:mediator-bot "$TARGET_DIR"
+                    # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
                   '';
                   
-                  # 3. Эта команда теперь выполняется из /var/lib/mediator-bot
-                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet MediatorTelegramBot.dll";
+                  ExecStart = "${pkgs.aspnetcore-runtime_9}/bin/dotnet MediatorTelegramBot.dll";
                   
                   Restart = "on-failure";
                 };
