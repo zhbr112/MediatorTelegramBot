@@ -117,10 +117,7 @@
                   name = cfg.database.user;
                 }];
 
-                ensureDatabases = [{
-                  name = cfg.database.name;
-                  owner = cfg.database.user;
-                }];
+                ensureDatabases = [cfg.database.name];
               };
               # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
               
