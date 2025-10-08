@@ -113,10 +113,14 @@
                 # Этот скрипт будет запущен ОДИН РАЗ при первой инициализации базы данных.
                 # Nix вставит сюда ПУТЬ к файлу с паролем, а команда `cat`
                 # прочитает его СОДЕРЖИМОЕ уже при запуске на вашей машине.
-                initialScript = pkgs.writeText "init-sql-script" ''
-                  CREATE USER test WITH PASSWORD 'test' SUPERUSER;
-                  CREATE DATABASE "${cfg.database.name}";
-                '';
+                ensureUsers = [{
+                  name = cfg.database.user;
+                }];
+
+                ensureDatabases = [{
+                  name = cfg.database.name;
+                  owner = cfg.database.user;
+                }];
               };
               # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
               
