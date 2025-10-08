@@ -132,8 +132,6 @@
                 after = [ "postgresql.service" ];
                 requires = [ "postgresql.service" ];
 
-                WorkingDirectory = "/var/lib/mediator-bot";
-
                 serviceConfig = {
                   Type = "simple";
                   User = "mediator-bot";
