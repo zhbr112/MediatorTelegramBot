@@ -138,23 +138,25 @@
 
                 serviceConfig = {
                   Type = "simple";
-                  User = "root";
-                  Group = "root";
+                  User = "mediator-bot";
+                  Group = "mediator-bot";
                   
-                  WorkingDirectory = "/var/lib/mediator-bot/app";
+                  # 2. Рабочая директория - это постоянный "дом". Он ГАРАНТИРОВАННО существует.
+                  #    Это решает ошибку CHDIR раз и навсегда.
+                  WorkingDirectory = "/var/lib/mediator-bot";
 
-                  # 2. Скрипт подготовки (запускается как root)
+                  # 3. Скрипт подготовки (запускается как root)
                   ExecStartPre = pkgs.writeShellScript "prepare-bot-env" ''
                     set -e
                     APP_DIR="/var/lib/mediator-bot/app"
-                    # Создаем папку приложения (rm не нужен, т.к. ExecStopPost все почистит)
+                    # Создаем временную рабочую область
                     mkdir -p "$APP_DIR"
                     # Копируем файлы
                     cp -r ${cfg.package}/* "$APP_DIR/"
                     cp ${cfg.secretsFile} "$APP_DIR/secrets.json"
-                    # Отдаем владение пользователю сервиса
+                    # Отдаем владение рабочей областью пользователю сервиса
                     chown -R mediator-bot:mediator-bot "$APP_DIR"
-                  '';               
+                  '';            
                   
                   ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet app/MediatorTelegramBot.dll";
 
