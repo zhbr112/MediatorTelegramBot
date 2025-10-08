@@ -150,7 +150,7 @@
                     mkdir -p /var/lib/mediator-bot
 
                     # Копируем скомпилированное приложение из Nix Store в "дом"
-                    cp -r ${cfg.package}/lib/mediator-telegram-bot/* /var/lib/mediator-bot/
+                    cp -r ${cfg.package}/* /var/lib/mediator-bot/
 
                     # Копируем файл с секретами
                     cp ${cfg.secretsFile} /var/lib/mediator-bot/secrets.json
