@@ -97,26 +97,28 @@
               serviceConfig = {
                 User = "mediatorbot";
                 Group = "mediatorbot";
-
-                # Команда для запуска приложения из нашего пакета
                 ExecStart = "${config.services.${projectName}.package}/bin/${projectName}";
-                
-                # Рабочая директория
                 WorkingDirectory = "/var/lib/${projectName}";
-                
                 Restart = "on-failure";
-                
-                # Передаем переменные окружения, определенные пользователем
-                Environment = [
-                  "ASPNETCORE_ENVIRONMENT=Production"
-                  "DOTNET_ENVIRONMENT=Production"
-                ] ++ (mapAttrsToList (name: value: "${name}=${value}") config.services.${projectName}.environment);
 
-                # Безопасно передаем пароль от БД в сервис
-                LoadCredential = [
-                    "postgres-test-password:${config.security.credentials.postgres-test-password.path}"
-                ];
-              };
+                # Мы объединяем переменные окружения, определенные пользователем,
+                # с нашей сгенерированной connection string.
+                Environment =
+                let
+                    # Читаем пароль из файла ОДИН РАЗ
+                    password = builtins.readFile config.services.${projectName}.passwordFile;
+                    # Собираем connection string
+                    connectionString = "Host=/run/postgresql;Database=mediator;Username=test;Password=${password}";
+                in
+                [
+                    "ASPNETCORE_ENVIRONMENT=Production"
+                    "DOTNET_ENVIRONMENT=Production"
+                    # Внедряем нашу connection string
+                    "ConnectionStrings__DefaultConnection=${connectionString}"
+                ]
+                # Добавляем любые другие переменные от пользователя
+                ++ (lib.mapAttrsToList (name: value: "${name}=${value}") config.services.${projectName}.environment);
+            };
             };
           };
         };
