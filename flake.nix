@@ -155,8 +155,8 @@
                     cp -r ${cfg.package}/* "$APP_DIR/"
                     cp ${cfg.secretsFile} "$APP_DIR/secrets.json"
                     # Отдаем владение рабочей областью пользователю сервиса
-                    chown -R mediator-bot:mediator-bot "$APP_DIR"
-                  '';            
+                    chown -R root:root "$APP_DIR"
+                  '';
                   
                   ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet app/MediatorTelegramBot.dll";
 
