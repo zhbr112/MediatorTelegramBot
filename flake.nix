@@ -48,6 +48,8 @@
             # Укажите TargetFramework из вашего .csproj файла
             # Например, <TargetFramework>net9.0</TargetFramework>
             nugetTargetId = "net9.0";
+            dotnet-sdk = pkgs.dotnet-sdk_9;
+          dotnet-runtime = pkgs.dotnet-runtime_9;
 
             # `buildDotnetModule` автоматически выполняет restore, build и publish.
             # Результатом будет готовое к запуску приложение.
