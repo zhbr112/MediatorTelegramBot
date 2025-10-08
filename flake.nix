@@ -40,95 +40,61 @@
 
         # --- КАК ЭТО РАЗВЕРНУТЬ (аналог docker-compose) ---
         # Мы определяем модуль для NixOS, который можно импортировать в конфигурацию системы.
-        nixosModules.default = { config, lib, ... }: with lib; {
-          # Определяем "API" нашего сервиса: какие опции пользователь сможет настраивать.
-          options.services.${projectName} = {
-            enable = mkEnableOption "Enable the Mediator Telegram Bot service";
-
-            package = mkOption {
-              type = types.package;
-              # По умолчанию используется пакет, который мы определили выше в этом же флейке.
-              default = self.packages.${system}.default;
-              description = "The package to use for the service.";
+        nixosModules.default = { config, lib, pkgs, ... }:
+        let
+            cfg = config.services.${projectName};
+        in
+        {
+            options.services.${projectName} = {
+            enable = lib.mkEnableOption "Enable the Mediator Telegram Bot service";
+            package = lib.mkOption {
+                type = lib.types.package;
+                default = self.packages.${system}.default;
+                description = "The package to use for the service.";
             };
-
-            environment = mkOption {
-              type = types.attrsOf types.str;
-              default = {};
-              description = "Environment variables for the service, used for configuration.";
-            };
-
             passwordFile = lib.mkOption {
-              type = lib.types.path;
-              description = "Path to the file containing the password for the 'test' PostgreSQL user.";
+                type = lib.types.path;
+                description = "Path to the file containing the password for the PostgreSQL user.";
             };
-          };
+            environment = lib.mkOption {
+                type = lib.types.attrsOf lib.types.str;
+                default = {};
+                description = "Additional environment variables for the service.";
+            };
+            };
 
-          # Реализация сервиса, если он включен (`enable = true;`).
-          config = lib.mkIf config.services.${projectName}.enable {
-            # 1. Настраиваем PostgreSQL
-            services.postgresql = {
-              enable = true;
-              # Мы заменяем 'ensureUsers' и 'ensureDatabases' этой одной опцией.
-              initialScriptFile =
-                  let
-                  # Читаем пароль из файла, как и раньше.
-                  password = builtins.readFile config.services.${projectName}.passwordFile;
-                  # ВАЖНО: Экранируем одинарные кавычки в пароле, чтобы избежать SQL-инъекций.
-                  escapedPassword = lib.replaceStrings [ "'" ] [ "''" ] password;
-                  in
-                  # Создаем SQL-скрипт "на лету"
-                  pkgs.writeText "mediator-db-init.sql" ''
-                  -- Создаем пользователя (роль) с правом входа и паролем
-                  CREATE ROLE test WITH LOGIN PASSWORD '${escapedPassword}';
-                  -- Создаем базу данных и сразу назначаем ее владельцем нашего нового пользователя
-                  CREATE DATABASE mediator WITH OWNER test;
-                  '';
-              };
-            
-            # 2. Создаем системного пользователя для запуска сервиса
-            users.users.mediatorbot = {
-              isSystemUser = true;
-              group = "mediatorbot";
-            };
+            config = lib.mkIf cfg.enable {
+            # Создаем пользователя для сервиса. Это единственное, что модуль делает для системы, кроме самого сервиса.
+            users.users.mediatorbot = { isSystemUser = true; group = "mediatorbot"; };
             users.groups.mediatorbot = {};
 
-            # 3. Настраиваем systemd-сервис
+            # Определяем ТОЛЬКО сервис для бота. НИКАКОГО PostgreSQL.
             systemd.services.${projectName} = {
-              description = "Mediator Telegram Bot Service";
-              wantedBy = [ "multi-user.target" ];
-              
-              # Запускаться после сети и базы данных
-              after = [ "network.target" "postgresql.service" ];
-              requires = [ "postgresql.service" ];
-
-              serviceConfig = {
+                description = "Mediator Telegram Bot Service";
+                wantedBy = [ "multi-user.target" ];
+                # Мы просто говорим, что нужно запускаться ПОСЛЕ PostgreSQL. Мы его не настраиваем.
+                after = [ "network.target" "postgresql.service" ];
+                requires = [ "postgresql.service" ];
+                serviceConfig = {
                 User = "mediatorbot";
                 Group = "mediatorbot";
-                ExecStart = "${config.services.${projectName}.package}/bin/${projectName}";
+                ExecStart = "${cfg.package}/bin/${projectName}";
                 WorkingDirectory = "/var/lib/${projectName}";
                 Restart = "on-failure";
-
-                # Мы объединяем переменные окружения, определенные пользователем,
-                # с нашей сгенерированной connection string.
                 Environment =
-                let
-                    # Читаем пароль из файла ОДИН РАЗ
-                    password = builtins.readFile config.services.${projectName}.passwordFile;
-                    # Собираем connection string
+                    let
+                    password = builtins.readFile cfg.passwordFile;
                     connectionString = "Host=/run/postgresql;Database=mediator;Username=test;Password=${password}";
-                in
-                [
+                    in
+                    [
                     "ASPNETCORE_ENVIRONMENT=Production"
                     "DOTNET_ENVIRONMENT=Production"
-                    # Внедряем нашу connection string
                     "ConnectionStrings__DefaultConnection=${connectionString}"
-                ]
-                # Добавляем любые другие переменные от пользователя
-                ++ (lib.mapAttrsToList (name: value: "${name}=${value}") config.services.${projectName}.environment);
+                    ]
+                    ++ (lib.mapAttrsToList (name: value: "${name}=${value}") cfg.environment);
+                };
             };
             };
-          };
         };
       }
     );
