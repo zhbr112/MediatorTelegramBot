@@ -17,9 +17,9 @@
 
           src = ./.;
 
-          projectFile = "MediatorTelegramBot.csproj"; # <-- Не забудьте проверить этот путь
+          NugetLockFilePath = "packages.lock.json"; 
 
-          nugetDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+          projectFile = "MediatorTelegramBot.csproj"; # <-- Не забудьте проверить этот путь
 
           dotnet-sdk = pkgs.dotnet-sdk_9;
           dotnet-runtime = pkgs.dotnet-runtime_9;
