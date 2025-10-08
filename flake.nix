@@ -1,101 +1,131 @@
 {
-  description = "Mediator Telegram Bot application and NixOS deployment module";
+  description = "A flake for the Mediator Telegram Bot project";
 
-  # Входы: зависимости нашего флейка
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  # Выходы: что предоставляет наш флейк
   outputs = { self, nixpkgs, flake-utils }:
-    # Используем flake-utils для поддержки разных архитектур (x86_64, aarch64)
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
 
-        # Имя вашего проекта. Используйте имя из .csproj файла.
-        projectName = "MediatorTelegramBot";
+        # 1. Пакет для сборки вашего .NET приложения
+        # Он воспроизводит шаги из Dockerfile
+        mediator-telegram-bot-pkg = pkgs.buildDotnetModule {
+          pname = "mediator-telegram-bot";
+          version = "0.1.0"; # Укажите вашу версию
+
+          src = ./.;
+
+          # !!! ВАЖНО: Укажите правильный путь к вашему .csproj файлу
+          projectFile = "MediatorTelegramBot/MediatorTelegramBot.csproj";
+          # NuGet-зависимости будут автоматически извлечены и кешированы Nix'ом
+          # NuGetLockFilePath = "packages.lock.json"; # Раскомментируйте, если используете lock-файл
+
+          # Версии .NET SDK и рантайма, соответствующие вашему Dockerfile
+          dotnet-sdk = pkgs.dotnet-sdk_9;
+          dotnet-runtime = pkgs.dotnet-runtime_9;
+
+          # Это аналог `dotnet publish`
+          # buildDotnetModule выполняет это по умолчанию
+        };
 
       in
       {
-        # --- ЧТО МОЖНО СОБРАТЬ (аналог Dockerfile) ---
-        # Мы определяем пакет, который содержит скомпилированное приложение.
-        packages = {
-          default = pkgs.buildDotnetModule {
-            pname = projectName;
-            version = "0.1.0"; # Можете использовать свою версию
+        # Пакет можно собрать вручную командой `nix build .`
+        packages.default = mediator-telegram-bot-pkg;
 
-            # Источник кода — это текущий репозиторий.
-            src = ./.;
-
-            # Информация для сборки, как и раньше
-            projectFile = "${projectName}.csproj";
-            nugetTargetId = "net9.0"; # Убедитесь, что версия .NET верна
-
-            # Nix автоматически выполнит dotnet restore, build и publish.
-          };
-        };
-
-
-        # --- КАК ЭТО РАЗВЕРНУТЬ (аналог docker-compose) ---
-        # Мы определяем модуль для NixOS, который можно импортировать в конфигурацию системы.
+        # 2. Модуль NixOS для развертывания всего стека
         nixosModules.default = { config, lib, pkgs, ... }:
-        let
-            cfg = config.services.${projectName};
-        in
-        {
-            options.services.${projectName} = {
-            enable = lib.mkEnableOption "Enable the Mediator Telegram Bot service";
-            package = lib.mkOption {
-                type = lib.types.package;
+          with lib;
+          let
+            cfg = config.services.mediatorTelegramBot;
+          in
+          {
+            options.services.mediatorTelegramBot = {
+              enable = mkEnableOption "Enable the Mediator Telegram Bot service";
+
+              package = mkOption {
+                type = types.package;
                 default = self.packages.${system}.default;
-                description = "The package to use for the service.";
-            };
-            passwordFile = lib.mkOption {
-                type = lib.types.path;
-                description = "Path to the file containing the password for the PostgreSQL user.";
-            };
-            environment = lib.mkOption {
-                type = lib.types.attrsOf lib.types.str;
-                default = {};
-                description = "Additional environment variables for the service.";
-            };
+                description = "The package to use for the bot.";
+              };
+
+              secretsFile = mkOption {
+                type = types.path;
+                description = ''
+                  Path to the secrets.json file.
+                  This file will be copied to the working directory before the service starts.
+                '';
+                example = "/path/to/your/secrets.json";
+              };
+
+              database = {
+                user = mkOption {
+                  type = types.str;
+                  default = "test";
+                  description = "PostgreSQL user for the application.";
+                };
+                passwordFile = mkOption {
+                  type = types.path;
+                  description = "Path to a file containing the PostgreSQL user password.";
+                };
+                name = mkOption {
+                  type = types.str;
+                  default = "mediator";
+                  description = "PostgreSQL database name for the application.";
+                };
+              };
             };
 
-            config = lib.mkIf cfg.enable {
-            # Создаем пользователя для сервиса. Это единственное, что модуль делает для системы, кроме самого сервиса.
-            users.users.mediatorbot = { isSystemUser = true; group = "mediatorbot"; };
-            users.groups.mediatorbot = {};
+            config = mkIf cfg.enable {
+              # 3. Настройка PostgreSQL, аналог 'db' сервиса в docker-compose
+              services.postgresql = {
+                enable = true;
+                enableTCPIP = true; # Разрешить подключения по TCP/IP (localhost)
+                initialScript = pkgs.writeText "mediator-db-init" ''
+                  CREATE ROLE "${cfg.database.user}" WITH LOGIN PASSWORD '${builtins.readFile cfg.database.passwordFile}';
+                  CREATE DATABASE "${cfg.database.name}" WITH OWNER = "${cfg.database.user}";
+                '';
+              };
+              
+              # Пользователь от имени которого будет работать сервис для безопасности
+              users.users.mediator-bot = {
+                isSystemUser = true;
+                group = "mediator-bot";
+              };
+              users.groups.mediator-bot = {};
 
-            # Определяем ТОЛЬКО сервис для бота. НИКАКОГО PostgreSQL.
-            systemd.services.${projectName} = {
+              # 4. Настройка systemd-сервиса, аналог 'server' в docker-compose
+              systemd.services.mediator-telegram-bot = {
                 description = "Mediator Telegram Bot Service";
                 wantedBy = [ "multi-user.target" ];
-                # Мы просто говорим, что нужно запускаться ПОСЛЕ PostgreSQL. Мы его не настраиваем.
-                after = [ "network.target" "postgresql.service" ];
+                # Запускать после и требовать наличия PostgreSQL
+                after = [ "postgresql.service" ];
                 requires = [ "postgresql.service" ];
+
                 serviceConfig = {
-                User = "mediatorbot";
-                Group = "mediatorbot";
-                ExecStart = "${cfg.package}/bin/${projectName}";
-                WorkingDirectory = "/var/lib/${projectName}";
-                Restart = "on-failure";
-                Environment =
-                    let
-                    password = builtins.readFile cfg.passwordFile;
-                    connectionString = "Host=/run/postgresql;Database=mediator;Username=test;Password=${password}";
-                    in
-                    [
-                    "ASPNETCORE_ENVIRONMENT=Production"
-                    "DOTNET_ENVIRONMENT=Production"
-                    "ConnectionStrings__DefaultConnection=${connectionString}"
-                    ]
-                    ++ (lib.mapAttrsToList (name: value: "${name}=${value}") cfg.environment);
+                  Type = "simple";
+                  User = "mediator-bot";
+                  Group = "mediator-bot";
+                  
+                  # Публикация .NET происходит в подпапку lib/<pname>
+                  WorkingDirectory = "${cfg.package}/lib/mediator-telegram-bot";
+                  
+                  # Копируем файл с секретами в рабочую директорию перед стартом
+                  ExecStartPre = "${pkgs.coreutils}/bin/cp ${cfg.secretsFile} ./secrets.json";
+                  
+                  # Команда запуска, аналог ENTRYPOINT
+                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet MediatorTelegramBot.dll";
+                  
+                  # Аналог restart: unless-stopped
+                  Restart = "on-failure";
                 };
+              };
             };
-            };
-        };
+          };
       }
     );
 }
