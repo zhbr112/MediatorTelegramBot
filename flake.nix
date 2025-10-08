@@ -57,6 +57,11 @@
               default = {};
               description = "Environment variables for the service, used for configuration.";
             };
+
+            passwordFile = lib.mkOption {
+              type = lib.types.path;
+              description = "Path to the file containing the password for the 'test' PostgreSQL user.";
+            };
           };
 
           # Реализация сервиса, если он включен (`enable = true;`).
@@ -67,7 +72,7 @@
               # 1. Декларативно создаем пользователя 'test'
               ensureUsers = [{
                   name = "test";
-                  passwordFile = "/run/keys/postgres-test-password";
+                  password = builtins.readFile config.services.${projectName}.passwordFile;
               }];
               # 2. Декларативно создаем базу данных 'mediator'
               ensureDatabases = [ "mediator" ];
