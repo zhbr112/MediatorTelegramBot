@@ -11,15 +11,26 @@
       let
         pkgs = import nixpkgs { inherit system; };
 
+        projectName = "MediatorTelegramBot";
+
         mediator-telegram-bot-pkg = pkgs.buildDotnetModule {
           pname = "mediator-telegram-bot";
           version = "0.1.0";
-
           src = ./.;
 
-          projectFile = "MediatorTelegramBot.csproj"; # <-- Не забудьте проверить этот путь
+          # --- МЕТОД ПРИНУЖДЕНИЯ ---
+          # Указываем только проектный файл
+          projectFile = "MediatorTelegramBot.csproj";
 
-          nugetDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+          # И добавляем ЗАВЕДОМО НЕПРАВИЛЬНЫЙ ХЕШ.
+          # Это заставит Nix запустить онлайн-этап скачивания зависимостей,
+          # который завершится ошибкой несоответствия хеша.
+          # Эта ошибка - НАША ЦЕЛЬ.
+          #nugetDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
+          nuGetUnsafeLockfileVersion = "2";
+          nuGetLockfile = ./packages.lock.json; # Adjust path if necessary
+          # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
           dotnet-sdk = pkgs.dotnet-sdk_9;
           dotnet-runtime = pkgs.dotnet-runtime_9;
@@ -27,7 +38,28 @@
 
       in
       {
-        packages.default = mediator-telegram-bot-pkg;
+        packages = {
+          default = pkgs.buildDotnetModule {
+            pname = projectName;
+            version = "0.1.0"; # Можете указать свою версию
+            src = ./.;
+
+            # Укажите путь к вашему главному файлу проекта.
+            # Если у вас .sln файл, используйте solutionFile = "./MySolution.sln";
+            projectFile = "${projectName}.csproj";
+
+            # Укажите TargetFramework из вашего .csproj файла
+            # Например, <TargetFramework>net9.0</TargetFramework>
+            nuGetUnsafeLockfileVersion = "2";
+            nuGetLockfile = ./packages.lock.json;
+            nugetTargetId = "net9.0";
+            dotnet-sdk = pkgs.dotnet-sdk_9;
+            dotnet-runtime = pkgs.dotnet-runtime_9;
+
+            # `buildDotnetModule` автоматически выполняет restore, build и publish.
+            # Результатом будет готовое к запуску приложение.
+          };
+        };
 
         nixosModules.default = { config, lib, pkgs, ... }:
           with lib;
