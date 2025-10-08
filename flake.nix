@@ -69,14 +69,22 @@
             # 1. Настраиваем PostgreSQL
             services.postgresql = {
               enable = true;
-              # 1. Декларативно создаем пользователя 'test'
-              ensureUsers = [{
-                  name = "test";
+              # Мы заменяем 'ensureUsers' и 'ensureDatabases' этой одной опцией.
+              initialScriptFile =
+                  let
+                  # Читаем пароль из файла, как и раньше.
                   password = builtins.readFile config.services.${projectName}.passwordFile;
-              }];
-              # 2. Декларативно создаем базу данных 'mediator'
-              ensureDatabases = [ "mediator" ];
-            };
+                  # ВАЖНО: Экранируем одинарные кавычки в пароле, чтобы избежать SQL-инъекций.
+                  escapedPassword = lib.replaceStrings [ "'" ] [ "''" ] password;
+                  in
+                  # Создаем SQL-скрипт "на лету"
+                  pkgs.writeText "mediator-db-init.sql" ''
+                  -- Создаем пользователя (роль) с правом входа и паролем
+                  CREATE ROLE test WITH LOGIN PASSWORD '${escapedPassword}';
+                  -- Создаем базу данных и сразу назначаем ее владельцем нашего нового пользователя
+                  CREATE DATABASE mediator WITH OWNER test;
+                  '';
+              };
             
             # 2. Создаем системного пользователя для запуска сервиса
             users.users.mediatorbot = {
