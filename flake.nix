@@ -120,11 +120,11 @@
               };
               # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
               
-              users.users.mediator-bot = {
-                isSystemUser = true;
-                group = "mediator-bot";
-              };
-              users.groups.mediator-bot = {};
+            #   users.users.mediator-bot = {
+            #     isSystemUser = true;
+            #     group = "mediator-bot";
+            #   };
+              users.groups.mediator-bot = {root};
 
               systemd.tmpfiles.rules = [
                 "d /var/lib/mediator-bot 0755 root root -"
@@ -138,7 +138,7 @@
 
                 serviceConfig = {
                   Type = "simple";
-                  User = "mediator-bot";
+                  User = "root";
                   Group = "mediator-bot";
                   
                   WorkingDirectory = "/var/lib/mediator-bot/app";
