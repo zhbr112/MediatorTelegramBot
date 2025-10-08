@@ -114,8 +114,8 @@
                 # Nix вставит сюда ПУТЬ к файлу с паролем, а команда `cat`
                 # прочитает его СОДЕРЖИМОЕ уже при запуске на вашей машине.
                 initialScript = pkgs.writeText "mediator-db-init" ''
-                  CREATE ROLE "${cfg.database.user}" WITH LOGIN PASSWORD '$(cat ${cfg.database.passwordFile})';
-                  CREATE DATABASE "${cfg.database.name}" WITH OWNER = "${cfg.database.user}";
+                  CREATE ROLE test WITH LOGIN PASSWORD test;
+                  CREATE DATABASE "${cfg.database.name}" WITH OWNER = test;
                 '';
               };
               # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
