@@ -115,10 +115,10 @@
                 # прочитает его СОДЕРЖИМОЕ уже при запуске на вашей машине.
                 ensureUsers = [{
                   name = cfg.database.user;
+                  ensureClauses.login = true;
                 }];
 
-                ensureDatabases = [cfg.database.name];
-                ensureClauses.login = true;
+                ensureDatabases = [cfg.database.name];                
               };
               # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
               
