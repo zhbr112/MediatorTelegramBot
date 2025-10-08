@@ -26,7 +26,10 @@
           # Это заставит Nix запустить онлайн-этап скачивания зависимостей,
           # который завершится ошибкой несоответствия хеша.
           # Эта ошибка - НАША ЦЕЛЬ.
-          nugetDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+          #nugetDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
+          nuGetUnsafeLockfileVersion = "2";
+          nuGetLockfile = ./packages.lock.json; # Adjust path if necessary
           # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
           dotnet-sdk = pkgs.dotnet-sdk_9;
@@ -47,9 +50,11 @@
 
             # Укажите TargetFramework из вашего .csproj файла
             # Например, <TargetFramework>net9.0</TargetFramework>
+            nuGetUnsafeLockfileVersion = "2";
+            nuGetLockfile = ./packages.lock.json;
             nugetTargetId = "net9.0";
             dotnet-sdk = pkgs.dotnet-sdk_9;
-          dotnet-runtime = pkgs.dotnet-runtime_9;
+            dotnet-runtime = pkgs.dotnet-runtime_9;
 
             # `buildDotnetModule` автоматически выполняет restore, build и publish.
             # Результатом будет готовое к запуску приложение.
