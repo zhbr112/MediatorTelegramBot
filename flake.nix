@@ -160,7 +160,7 @@
                   '';
                   
                   # 3. Эта команда теперь выполняется из /var/lib/mediator-bot
-                  ExecStart = "${pkgs.aspnetcore-runtime_9}/bin/dotnet MediatorTelegramBot.dll";
+                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet MediatorTelegramBot.dll";
                   
                   Restart = "on-failure";
                 };
