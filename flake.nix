@@ -138,7 +138,7 @@
                   # 3. УПРОЩЕНО: Скрипт подготовки теперь проще, так как root все может.
                   
                   
-                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ${cfg.package}/MediatorTelegramBot.dll";
+                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ${cfg.package}/lib/mediator-telegram-bot/MediatorTelegramBot.dll";
 
                  
                   
