@@ -82,13 +82,23 @@
 
             config = mkIf cfg.enable {
               # 3. Настройка PostgreSQL, аналог 'db' сервиса в docker-compose
+              # Используем декларативные опции для управления PostgreSQL
               services.postgresql = {
                 enable = true;
-                enableTCPIP = true; # Разрешить подключения по TCP/IP (localhost)
-                initialScript = pkgs.writeText "mediator-db-init" ''
-                  CREATE ROLE "${cfg.database.user}" WITH LOGIN PASSWORD '${builtins.readFile cfg.database.passwordFile}';
-                  CREATE DATABASE "${cfg.database.name}" WITH OWNER = "${cfg.database.user}";
-                '';
+                enableTCPIP = true;
+
+                # Эта опция создает пользователя и читает пароль из файла
+                # ВО ВРЕМЯ ЗАПУСКА СИСТЕМЫ, а не во время сборки.
+                ensureUsers = [{
+                  name = cfg.database.user;
+                  passwordFile = cfg.database.passwordFile;
+                }];
+
+                # Эта опция создает базу данных и назначает ей владельца.
+                ensureDatabases = [{
+                  name = cfg.database.name;
+                  owner = cfg.database.user;
+                }];
               };
               
               # Пользователь от имени которого будет работать сервис для безопасности
