@@ -60,7 +60,7 @@
           };
 
           # Реализация сервиса, если он включен (`enable = true;`).
-          config = mkIf config.services.${projectName}.enable {
+          config = lib.mkIf config.services.${projectName}.enable {
             # 1. Настраиваем PostgreSQL
             services.postgresql = {
               enable = true;
