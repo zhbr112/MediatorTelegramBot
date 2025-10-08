@@ -132,16 +132,37 @@
                 after = [ "postgresql.service" ];
                 requires = [ "postgresql.service" ];
 
+                WorkingDirectory = "/var/lib/mediator-bot";
+
                 serviceConfig = {
                   Type = "simple";
                   User = "mediator-bot";
                   Group = "mediator-bot";
                   
-                  WorkingDirectory = "${cfg.package}/lib/mediator-telegram-bot";
+                  # 1. Указываем "дом" сервиса в качестве рабочей директории.
+                  # У пользователя mediator-bot будут права на эту папку.
+                  WorkingDirectory = "/var/lib/mediator-bot";
+
+                  # 2. Этот скрипт выполняется от имени root перед запуском.
+                  # Он подготавливает "дом" для сервиса.
+                  ExecStartPre = pkgs.writeShellScript "prepare-bot-env" ''
+                    set -e # Прерывать выполнение при любой ошибке
+
+                    # Создаем директорию, если ее нет
+                    mkdir -p /var/lib/mediator-bot
+
+                    # Копируем скомпилированное приложение из Nix Store в "дом"
+                    cp -r ${cfg.package}/lib/mediator-telegram-bot/* /var/lib/mediator-bot/
+
+                    # Копируем файл с секретами
+                    cp ${cfg.secretsFile} /var/lib/mediator-bot/secrets.json
+
+                    # Делаем пользователя mediator-bot владельцем всего в его "доме"
+                    chown -R mediator-bot:mediator-bot /var/lib/mediator-bot
+                  '';
                   
-                  ExecStartPre = "${pkgs.coreutils}/bin/cp ${cfg.secretsFile} ./secrets.json";
-                  
-                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet MediatorTelegramBot.dll";
+                  # 3. Эта команда теперь выполняется из /var/lib/mediator-bot
+                  ExecStart = "${pkgs.aspnetcore-runtime_9}/bin/dotnet MediatorTelegramBot.dll";
                   
                   Restart = "on-failure";
                 };
