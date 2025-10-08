@@ -17,7 +17,7 @@
 
           src = ./.;
 
-          #NugetLockFilePath = "packages.lock.json"; 
+          NugetLockFilePath = "packages.lock.json"; 
 
           projectFile = "MediatorTelegramBot.csproj"; # <-- Не забудьте проверить этот путь
 
