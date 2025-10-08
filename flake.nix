@@ -11,6 +11,8 @@
       let
         pkgs = import nixpkgs { inherit system; };
 
+        projectName = "MediatorTelegramBot";
+
         mediator-telegram-bot-pkg = pkgs.buildDotnetModule {
           pname = "mediator-telegram-bot";
           version = "0.1.0";
@@ -33,7 +35,24 @@
 
       in
       {
-        packages.default = mediator-telegram-bot-pkg;
+        packages = {
+          default = pkgs.buildDotnetModule {
+            pname = projectName;
+            version = "0.1.0"; # Можете указать свою версию
+            src = ./.;
+
+            # Укажите путь к вашему главному файлу проекта.
+            # Если у вас .sln файл, используйте solutionFile = "./MySolution.sln";
+            projectFile = "${projectName}.csproj";
+
+            # Укажите TargetFramework из вашего .csproj файла
+            # Например, <TargetFramework>net9.0</TargetFramework>
+            nugetTargetId = "net9.0";
+
+            # `buildDotnetModule` автоматически выполняет restore, build и publish.
+            # Результатом будет готовое к запуску приложение.
+          };
+        };
 
         nixosModules.default = { config, lib, pkgs, ... }:
           with lib;
