@@ -14,12 +14,21 @@
         mediator-telegram-bot-pkg = pkgs.buildDotnetModule {
           pname = "mediator-telegram-bot";
           version = "0.1.0";
-
           src = ./.;
 
-          NugetLockFilePath = "packages.lock.json"; 
+          # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: Используем Solution File ---
+          # Указываем на .sln файл. Это позволит Nix правильно
+          # восстановить зависимости для всего решения.
+          solutionFile = "MediatorTelegramBot.sln";
 
-          projectFile = "MediatorTelegramBot.csproj"; # <-- Не забудьте проверить этот путь
+          # После восстановления зависимостей, мы должны явно указать,
+          # какой именно проект из этого решения нужно опубликовать.
+          # Путь указывается от корня проекта.
+          publishProject = "MediatorTelegramBot.csproj";
+          
+          # Мы больше не указываем NugetLockFilePath явно, так как
+          # `dotnet restore` на решении сам найдет нужный lock-файл.
+          # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
           dotnet-sdk = pkgs.dotnet-sdk_9;
           dotnet-runtime = pkgs.dotnet-runtime_9;
