@@ -111,7 +111,7 @@
 
                 # Безопасно передаем пароль от БД в сервис
                 LoadCredential = [
-                  "postgres-test-password:${config.security.secrets.postgres-test-password.path}"
+                    "postgres-test-password:${config.security.credentials.postgres-test-password.path}"
                 ];
               };
             };
