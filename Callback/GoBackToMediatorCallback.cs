@@ -23,12 +23,12 @@ public class GoBackToMediatorCallback : ICallbackQuery
         var dataParts = callbackQuery.Data!.Split(' ');
         if (dataParts.Length < 2 || !Guid.TryParse(dataParts[1], out var mediatorId))
         {
-            await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Ошибка: неверный ID", cancellationToken: cancellationToken);
+            await botClient.AnswerCallbackQuery(callbackQuery.Id, "Ошибка: неверный ID", cancellationToken: cancellationToken);
             return;
         }
 
         // Отвечаем на коллбэк, чтобы убрать "часики"
-        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+        await botClient.AnswerCallbackQuery(callbackQuery.Id, cancellationToken: cancellationToken);
 
         // Просто вызываем новый метод для редактирования
         await _cardService.EditMessageToMediatorCardAsync(

@@ -4,7 +4,6 @@ using MediatorTelegramBot.Data;
 using MediatorTelegramBot.Extensions;
 using MediatorTelegramBot.Models;
 using MediatorTelegramBot.Services;
-using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using Telegram.Bot.Types;
