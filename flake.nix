@@ -40,8 +40,7 @@
 
         # --- КАК ЭТО РАЗВЕРНУТЬ (аналог docker-compose) ---
         # Мы определяем модуль для NixOS, который можно импортировать в конфигурацию системы.
-        nixosModules = {
-          default = { config, lib, ... }: {
+        nixosModules.default = { config, lib, ... }: with lib; {
           # Определяем "API" нашего сервиса: какие опции пользователь сможет настраивать.
           options.services.${projectName} = {
             enable = mkEnableOption "Enable the Mediator Telegram Bot service";
@@ -117,7 +116,6 @@
               };
             };
           };
-        };
         };
       }
     );
