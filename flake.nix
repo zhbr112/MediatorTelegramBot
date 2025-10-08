@@ -19,6 +19,8 @@
 
           projectFile = "MediatorTelegramBot.csproj"; # <-- Не забудьте проверить этот путь
 
+          nugetDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
           dotnet-sdk = pkgs.dotnet-sdk_9;
           dotnet-runtime = pkgs.dotnet-runtime_9;
         };
