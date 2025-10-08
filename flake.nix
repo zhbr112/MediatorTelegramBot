@@ -50,9 +50,10 @@
 
             # Укажите TargetFramework из вашего .csproj файла
             # Например, <TargetFramework>net9.0</TargetFramework>
-            nuGetUnsafeLockfileVersion = "2";
-            nuGetLockfile = ./packages.lock.json;
-            nugetTargetId = "net9.0";
+            # nuGetUnsafeLockfileVersion = "2";
+            # nuGetLockfile = ./packages.lock.json;
+            # nugetTargetId = "net9.0";
+            nugetDeps = ./deps.json;
             dotnet-sdk = pkgs.dotnet-sdk_9;
             dotnet-runtime = pkgs.dotnet-runtime_9;
 
