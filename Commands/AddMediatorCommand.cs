@@ -66,16 +66,24 @@ public class AddMediatorCommand(MediatorDbContext db, S3Client s3Client, AdminsA
 
                 var file = await botClient.GetFile(photo.FileId, cancellationToken);
 
-                var fs = new FileStream(process.Id.ToString(), FileMode.Create);
-                await botClient.DownloadFile(file.FilePath, fs, cancellationToken);
-
-                var objectRequest = new PutObjectRequest()
+                using (var memoryStream = new MemoryStream())
                 {
-                    BucketName = "mediators",
-                    Key = $"{process.Id}.jpg",
-                    InputStream = fs
-                };
-                var reponse = await s3Client.S3.PutObjectAsync(objectRequest);
+                    // 2. Скачиваем файл напрямую в этот поток
+                    await botClient.DownloadFile(file.FilePath, memoryStream, cancellationToken);
+
+                    // 3. ВАЖНО: "Перематываем" поток в начало, чтобы S3 клиент мог его прочитать с начала
+                    memoryStream.Position = 0;
+
+                    var objectRequest = new PutObjectRequest()
+                    {
+                        BucketName = "mediators",
+                        Key = $"{process.Id}.jpg",
+                        // 4. Передаем S3 клиенту поток из памяти
+                        InputStream = memoryStream
+                    };
+
+                    await s3Client.S3.PutObjectAsync(objectRequest);
+                }             
 
                 Mediator mediator = new Mediator(process.Id, process.Name, process.Description, process.Phone, process.Tags);
                 await db.Mediators.AddAsync(mediator);

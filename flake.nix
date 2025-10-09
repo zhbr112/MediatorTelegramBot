@@ -109,7 +109,6 @@
                     set -e # Прерывать выполнение при любой ошибке
 
                     # Создаем директорию, если ее нет
-                    mkdir -p ./app
 
                     # Копируем скомпилированное приложение из Nix Store в "дом"
                     cp -r ${cfg.package}/lib/MediatorTelegramBot /var/lib/mediator-bot/
