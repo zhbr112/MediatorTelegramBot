@@ -103,8 +103,8 @@
                 serviceConfig = {
                   Type = "simple";
 
-                  User = ${cfg.database.user};
-                  Group = ${cfg.database.user};     
+                  User = cfg.database.user;
+                  Group = cfg.database.user;     
 
                   EnvironmentFile = cfg.secretsFile;           
                   
