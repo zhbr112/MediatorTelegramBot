@@ -62,7 +62,6 @@
             };
 
             config = mkIf cfg.enable {
-              # --- ИСПРАВЛЕННЫЙ БЛОК ---
               services.postgresql = {
                 authentication = pkgs.lib.mkOverride 10 ''
                     #type database DBuser auth-method
@@ -72,9 +71,6 @@
                 enable = true;
                 enableTCPIP = true;
                 
-                # Этот скрипт будет запущен ОДИН РАЗ при первой инициализации базы данных.
-                # Nix вставит сюда ПУТЬ к файлу с паролем, а команда `cat`
-                # прочитает его СОДЕРЖИМОЕ уже при запуске на вашей машине.
                 ensureUsers = [{
                   name = cfg.database.user;
                   ensureClauses.login = true;
@@ -83,6 +79,14 @@
 
                 ensureDatabases = [cfg.database.name];                
               };
+
+              # Создаем специального пользователя для запуска сервиса
+              users.users.mediatorbot = {
+                isSystemUser = true;
+                group = "mediatorbot";
+              };
+              users.groups.mediatorbot = {};
+
               systemd.services.mediator-telegram-bot = {
                 description = "Mediator Telegram Bot Service";
                 wantedBy = [ "multi-user.target" ];
@@ -92,11 +96,8 @@
                 serviceConfig = {
                   Type = "simple";
 
-                  # 2. ИЗМЕНЕНО: Запускаем сервис от имени root.
-                  User = "root";
-                  Group = "root";
-                  
-                  WorkingDirectory = "/var/lib/mediator-bot";
+                  User = "mediatorbot";
+                  Group = "mediatorbot";              
                   
                   ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ${cfg.package}/lib/MediatorTelegramBot/MediatorTelegramBot.dll";
                   EnvironmentFile = cfg.secretsFile;                 
