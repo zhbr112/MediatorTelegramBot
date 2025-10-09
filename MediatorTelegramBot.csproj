@@ -5,12 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-        <UserSecretsId>d9cec99a-97de-44ca-b3b8-f113aa8558a0</UserSecretsId>
   </PropertyGroup>
-    <ItemGroup>
-      <None Remove="secrets.json" />
-    </ItemGroup>
-
     <ItemGroup>
         <PackageReference Include="AWSSDK.S3" Version="4.0.7.7" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
@@ -27,12 +22,6 @@
 
     <ItemGroup>
         <None Include="appsettings.json" CopyToPublishDirectory="Always" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Include="secrets.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>

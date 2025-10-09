@@ -17,7 +17,7 @@ using Telegram.Bot.Types;
 var builder = Host.CreateApplicationBuilder(args);
 
 // Add user secrets
-builder.Configuration.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
+//builder.Configuration.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
 
 //builder.Configuration.AddJsonFile("secrets.json");
 
