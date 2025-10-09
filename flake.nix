@@ -14,7 +14,20 @@
         projectName = "MediatorTelegramBot";
       in
       {
-        
+        packages = {
+          default = pkgs.buildDotnetModule {
+            pname = projectName;
+            version = "0.1.0";
+            src = ./.;
+            projectFile = "${projectName}.csproj";
+            nugetDeps = ./deps.json;
+            dotnet-sdk = pkgs.dotnet-sdk_9;
+            dotnet-runtime = pkgs.dotnet-runtime_9;
+            preConfigure = ''
+              echo "{}" > secrets.json
+            '';
+          };
+        };
 
         nixosModules.default = { config, lib, pkgs, ... }:
           with lib;
@@ -55,21 +68,6 @@
               };
             };
 
-            packages = {
-              default = pkgs.buildDotnetModule {
-                pname = projectName;
-                version = "0.1.0";
-                src = ./.;
-                projectFile = "${projectName}.csproj";
-                nugetDeps = ./deps.json;
-                dotnet-sdk = pkgs.dotnet-sdk_9;
-                dotnet-runtime = pkgs.dotnet-runtime_9;
-                preConfigure = ''
-                  cat ${cfg.secretsFile} > secrets.json
-                '';
-              };
-            };
-
             config = mkIf cfg.enable {
               # --- ИСПРАВЛЕННЫЙ БЛОК ---
               services.postgresql = {
@@ -92,8 +90,6 @@
 
                 ensureDatabases = [cfg.database.name];                
               };
-              # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
-              
               systemd.services.mediator-telegram-bot = {
                 description = "Mediator Telegram Bot Service";
                 wantedBy = [ "multi-user.target" ];
@@ -110,19 +106,18 @@
                   WorkingDirectory = "/var/lib/mediator-bot";
 
                   # 3. УПРОЩЕНО: Скрипт подготовки теперь проще, так как root все может.
-                  ExecStartPre = pkgs.writeShellScript "prepare-bot-secrets" ''
-                    set -e
-                    cp -r ${cfg.package}/lib/MediatorTelegramBot/ /var/lib/mediator-bot/
-                    cp /var/lib/mediator-bot/secrets.json /var/lib/mediator-bot/MediatorTelegramBot/secrets.json
-                  '';
+                  # ExecStartPre = pkgs.writeShellScript "prepare-bot-secrets" ''
+                  #   set -e
+                  #   cp -r ${cfg.package}/lib/MediatorTelegramBot/ /var/lib/mediator-bot/
+                  #   cp /var/lib/mediator-bot/secrets.json /var/lib/mediator-bot/MediatorTelegramBot/secrets.json
+                  # '';
                   
-                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet /var/lib/mediator-bot/MediatorTelegramBot/MediatorTelegramBot.dll";
-
-                 
+                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ${cfg.package}/lib/MediatorTelegramBot/MediatorTelegramBot.dll";
+                  EnvironmentFile = /var/lib/mediator-bot/secrets.env;                 
                   
                   Restart = "on-failure";
                 };
-              };
+              };             
             };
           };
       }
