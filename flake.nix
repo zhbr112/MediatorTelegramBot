@@ -14,20 +14,7 @@
         projectName = "MediatorTelegramBot";
       in
       {
-        packages = {
-          default = pkgs.buildDotnetModule {
-            pname = projectName;
-            version = "0.1.0";
-            src = ./.;
-            projectFile = "${projectName}.csproj";
-            nugetDeps = ./deps.json;
-            dotnet-sdk = pkgs.dotnet-sdk_9;
-            dotnet-runtime = pkgs.dotnet-runtime_9;
-            preConfigure = ''
-              cat ${cfg.secretsFile} > secrets.json
-            '';
-          };
-        };
+        
 
         nixosModules.default = { config, lib, pkgs, ... }:
           with lib;
@@ -65,6 +52,21 @@
                   default = "mediator";
                   description = "PostgreSQL database name for the application.";
                 };
+              };
+            };
+
+            packages = {
+              default = pkgs.buildDotnetModule {
+                pname = projectName;
+                version = "0.1.0";
+                src = ./.;
+                projectFile = "${projectName}.csproj";
+                nugetDeps = ./deps.json;
+                dotnet-sdk = pkgs.dotnet-sdk_9;
+                dotnet-runtime = pkgs.dotnet-runtime_9;
+                preConfigure = ''
+                  cat ${cfg.secretsFile} > secrets.json
+                '';
               };
             };
 
