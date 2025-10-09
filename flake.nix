@@ -95,7 +95,7 @@
               };
               users.groups.${cfg.database.user} = {};
 
-              systemd.services.mediator-telegram-bot = {
+              systemd.services.${projectName} = {
                 description = "Mediator Telegram Bot Service";
                 wantedBy = [ "multi-user.target" ];
                 after = [ "postgresql.service" "systemd-tmpfiles-setup.service"];
