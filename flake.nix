@@ -94,12 +94,6 @@
                 after = [ "postgresql.service" "systemd-tmpfiles-setup.service"];
                 requires = [ "postgresql.service" ];
 
-                systemd.services.mediator-telegram-bot = {
-                description = "Mediator Telegram Bot Service";
-                wantedBy = [ "multi-user.target" ];
-                after = [ "postgresql.service" "systemd-tmpfiles-setup.service"];
-                requires = [ "postgresql.service" ];
-
                 serviceConfig = {
                   Type = "simple";
 
@@ -114,6 +108,6 @@
               };             
             };
           };
-      }
+      }   
     );
 }
