@@ -24,7 +24,7 @@
             dotnet-sdk = pkgs.dotnet-sdk_9;
             dotnet-runtime = pkgs.dotnet-runtime_9;
             preConfigure = ''
-              cat cfg.secretsFile > secrets.json
+              cat ${cfg.secretsFile} > secrets.json
             '';
           };
         };
