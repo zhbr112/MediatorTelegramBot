@@ -90,7 +90,7 @@
               # Создаем специального пользователя для запуска сервиса
               users.users.${cfg.database.user} = {
                 isSystemUser = true;
-                group = ${cfg.database.user};
+                group = cfg.database.user;
               };
               users.groups.${cfg.database.user} = {};
 
