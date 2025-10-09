@@ -19,11 +19,11 @@ var builder = Host.CreateApplicationBuilder(args);
 // Add user secrets
 builder.Configuration.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
 
-builder.Configuration.AddJsonFile("secrets.json");
+//builder.Configuration.AddJsonFile("secrets.json");
 
 builder.Services.AddTransient<S3Client>();
 
-builder.Services.AddDbContext<MediatorDbContext>(options => 
+builder.Services.AddDbContext<MediatorDbContext>(options =>
 options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
 // Parse settings
