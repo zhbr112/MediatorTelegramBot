@@ -92,7 +92,7 @@ public class MediatorCardService
         var ratingString = averageRating > 0 ? $"⭐ {averageRating:F1}/5.0 ({reviews.Count} отзывов)" : "⭐ Нет отзывов";
         var tags = string.Join("\n", mediator.Tags.Select(x => $"\t• {x}"));
 
-        var content = $"{mediator.Name}\n{ratingString}\n\n{mediator.Description}\n\nтел.{mediator.Phone}";
+        var content = $"{mediator.Name}\n{ratingString}\n\n{mediator.Description}\n\n{tags}\n\nтел.{mediator.Phone}";
 
         var isFavorite = user?.FavoriteMediators.Any(fm => fm.Id == mediator.Id) ?? false;
         var favoriteButtonText = isFavorite ? "❤️ Убрать из избранного" : "🤍 Добавить в избранное";
