@@ -94,30 +94,20 @@
                 after = [ "postgresql.service" "systemd-tmpfiles-setup.service"];
                 requires = [ "postgresql.service" ];
 
+                systemd.services.mediator-telegram-bot = {
+                description = "Mediator Telegram Bot Service";
+                wantedBy = [ "multi-user.target" ];
+                after = [ "postgresql.service" "systemd-tmpfiles-setup.service"];
+                requires = [ "postgresql.service" ];
+
                 serviceConfig = {
                   Type = "simple";
 
                   User = "mediatorbot";
                   Group = "mediatorbot";              
-                                 
-                  EnvironmentFile = cfg.secretsFile;    
-
-
-                  WorkingDirectory = "/var/lib/mediator-bot";
-
-                  ExecStartPre = pkgs.writeShellScript "prepare-bot-env" ''
-                    set -e # Прерывать выполнение при любой ошибке
-
-                    # Создаем директорию, если ее нет
-
-                    # Копируем скомпилированное приложение из Nix Store в "дом"
-                    cp -r ${cfg.package}/lib/MediatorTelegramBot /var/lib/mediator-bot/
-
-                    # Делаем пользователя mediator-bot владельцем всего в его "доме"
-                    chown -R mediator-bot:mediator-bot /var/lib/mediator-bot/MediatorTelegramBot
-                  '';
                   
-                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ./MediatorTelegramBot/MediatorTelegramBot.dll";                           
+                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ${cfg.package}/lib/MediatorTelegramBot/MediatorTelegramBot.dll";
+                  EnvironmentFile = cfg.secretsFile;                 
                   
                   Restart = "on-failure";
                 };
