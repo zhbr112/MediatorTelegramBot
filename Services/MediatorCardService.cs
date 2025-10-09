@@ -90,6 +90,7 @@ public class MediatorCardService
         var reviews = mediator.Reviews;
         var averageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
         var ratingString = averageRating > 0 ? $"⭐ {averageRating:F1}/5.0 ({reviews.Count} отзывов)" : "⭐ Нет отзывов";
+        var tags = string.Join("\n", mediator.Tags.Select(x => $"\t• {x}"));
 
         var content = $"{mediator.Name}\n{ratingString}\n\n{mediator.Description}\n\nтел.{mediator.Phone}";
 
