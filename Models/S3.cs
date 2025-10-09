@@ -20,7 +20,7 @@ public class S3Client
             {
                 ServiceURL = "https://s3.1zq.ru",
                 ForcePathStyle = true,
-                AuthenticationRegion = "ru-1"
+                AuthenticationRegion = "ru-irk-1"
             });
     }
 }
