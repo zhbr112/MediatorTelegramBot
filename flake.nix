@@ -29,10 +29,10 @@
         nixosModules.default = { config, lib, pkgs, ... }:
           with lib;
           let
-            cfg = config.services.mediatorTelegramBot;
+            cfg = config.services.${projectName};
           in
           {
-            options.services.mediatorTelegramBot = {
+            options.services.${projectName} = {
               enable = mkEnableOption "Enable the Mediator Telegram Bot service";
 
               package = mkOption {
@@ -46,6 +46,12 @@
                 description = "Path to the secrets.json file.";
                 example = "/path/to/your/secrets.json";
               };
+
+              user = mkOption {
+                  type = types.str;
+                  default = "mediatorbot";
+                  description = "PostgreSQL user for the application.";
+                };
 
               database = {
                 user = mkOption {
@@ -82,11 +88,11 @@
               };
 
               # Создаем специального пользователя для запуска сервиса
-              users.users.mediatorbot = {
+              users.users.${cfg.database.user} = {
                 isSystemUser = true;
-                group = "mediatorbot";
+                group = ${cfg.database.user};
               };
-              users.groups.mediatorbot = {};
+              users.groups.${cfg.database.user} = {};
 
               systemd.services.mediator-telegram-bot = {
                 description = "Mediator Telegram Bot Service";
@@ -97,11 +103,12 @@
                 serviceConfig = {
                   Type = "simple";
 
-                  User = "mediatorbot";
-                  Group = "mediatorbot";              
+                  User = ${cfg.database.user};
+                  Group = ${cfg.database.user};     
+
+                  EnvironmentFile = cfg.secretsFile;           
                   
-                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ${cfg.package}/lib/MediatorTelegramBot/MediatorTelegramBot.dll";
-                  EnvironmentFile = cfg.secretsFile;                 
+                  ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ${cfg.package}/lib/MediatorTelegramBot/MediatorTelegramBot.dll";                               
                   
                   Restart = "on-failure";
                 };
