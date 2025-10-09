@@ -23,9 +23,6 @@
             nugetDeps = ./deps.json;
             dotnet-sdk = pkgs.dotnet-sdk_9;
             dotnet-runtime = pkgs.dotnet-runtime_9;
-            preConfigure = ''
-              echo "{}" > secrets.json
-            '';
           };
         };
 
@@ -55,10 +52,6 @@
                   type = types.str;
                   default = "test";
                   description = "PostgreSQL user for the application.";
-                };
-                passwordFile = mkOption {
-                  type = types.path;
-                  description = "Path to a file containing the PostgreSQL user password.";
                 };
                 name = mkOption {
                   type = types.str;
@@ -104,16 +97,9 @@
                   Group = "root";
                   
                   WorkingDirectory = "/var/lib/mediator-bot";
-
-                  # 3. УПРОЩЕНО: Скрипт подготовки теперь проще, так как root все может.
-                  # ExecStartPre = pkgs.writeShellScript "prepare-bot-secrets" ''
-                  #   set -e
-                  #   cp -r ${cfg.package}/lib/MediatorTelegramBot/ /var/lib/mediator-bot/
-                  #   cp /var/lib/mediator-bot/secrets.json /var/lib/mediator-bot/MediatorTelegramBot/secrets.json
-                  # '';
                   
                   ExecStart = "${pkgs.dotnet-runtime_9}/bin/dotnet ${cfg.package}/lib/MediatorTelegramBot/MediatorTelegramBot.dll";
-                  EnvironmentFile = /var/lib/mediator-bot/secrets.env;                 
+                  EnvironmentFile = cfg.secretsFile;                 
                   
                   Restart = "on-failure";
                 };
